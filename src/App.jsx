@@ -6,43 +6,39 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import Login from "./components/ui/Login";
-import Register from "./components/ui/Register";
-import LandingPage from "./components/ui/LandingPage";
-import CreateTask from "./components/ui/CreateTask";
-import AdminDashboard from "./components/ui/AdminDashboard";
+import Login from "./components/pages/Login";
+import Register from "./components/pages/Register";
+import LandingPage from "./components/pages/LandingPage";
+import CreateTask from "./components/pages/admin/CreateTask";
+import AdminDashboard, {sampleTasks} from "./components/pages/admin/AdminDashboard";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing page */}
         <Route
-          path="/"
+          path="/landingpage"
           element={<LandingPage />}
         />
-
-        {/* Login page */}
         <Route
           path="/login"
           element={<Login />}
         />
-
-        {/* Register page */}
         <Route
           path="/register"
           element={<Register />}
         />
-        <Route path="/tasks/new" element={<CreateTask />} />
+        <Route path="/tasks/new" 
+        element={<CreateTask />} />
         <Route
-  path="/admin/dashboard"
-  element={<AdminDashboard />}
+        path="/admin/dashboard"
+        element={<AdminDashboard tasks={sampleTasks} />}
 />
 
         {/* Unknown routes */}
         <Route
           path="*"
-          element={<Navigate to="/" replace />}
+          element={<Navigate to="/landingpage" replace />}
         />
       </Routes>
     </BrowserRouter>

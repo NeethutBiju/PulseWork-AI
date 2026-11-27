@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// 1. Zod validation schema
+// Get today's date in YYYY-MM-DD format
+function getTodayDate() {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+// Zod validation schema
 const taskSchema = z.object({
   title: z
     .string()
@@ -34,10 +45,9 @@ const taskSchema = z.object({
 
   priority: z
     .string()
-    .min(1, "Please select a priority")
     .refine(
       (value) => ["Low", "Medium", "High"].includes(value),
-      "Invalid priority"
+      "Please select a valid priority"
     ),
 
   dueDate: z
@@ -46,22 +56,27 @@ const taskSchema = z.object({
     .refine(
       (value) => !Number.isNaN(Date.parse(value)),
       "Please enter a valid date"
+    )
+    .refine(
+      (value) => value >= getTodayDate(),
+      "Due date cannot be in the past"
     ),
 
   status: z
     .string()
-    .min(1, "Please select a task status")
     .refine(
       (value) =>
         ["Pending", "In Progress", "Completed"].includes(value),
-      "Invalid task status"
+      "Please select a valid task status"
     ),
 });
 
-function CreateTask() {
+function CreateTask({ onCreateTask }) {
   const [successMessage, setSuccessMessage] = useState("");
 
-  // 2. React Hook Form
+  const navigate = useNavigate();
+  const today = getTodayDate();
+
   const {
     register,
     handleSubmit,
@@ -75,37 +90,60 @@ function CreateTask() {
       assignedEmployee: "",
       priority: "",
       dueDate: "",
-      status: "",
+      status: "Pending",
     },
   });
 
-  // 3. Runs only when validation succeeds
+  // Runs only when validation succeeds
   const onSubmit = (data) => {
+    const newTask = {
+      id: Date.now(),
+      title: data.title,
+      description: data.description,
+      employee: data.assignedEmployee,
+      priority: data.priority,
+      status: data.status,
+      dueDate: data.dueDate,
+    };
+
+    // Send the task to App.jsx
+    onCreateTask(newTask);
+
     console.log("Task created successfully:");
-    console.log(data);
+    console.log(newTask);
 
     setSuccessMessage("Task created successfully!");
+
     reset();
+
+    // Return to Admin Dashboard
+    navigate("/admin/dashboard");
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF3E3] px-4 py-10">
+    <div
+      className="min-h-screen bg-[#FFF3E3] px-4 py-10"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
       <div className="mx-auto max-w-3xl">
-
         {/* Header */}
         <div className="mb-8">
-          <Link
-            to="/"
-            className="text-sm font-medium text-[#8C5A3C] hover:text-[#4B2E2B]"
+          <button
+            type="button"
+            onClick={() => navigate("/admin/dashboard")}
+            className="text-sm font-medium text-[#6F4536] hover:text-[#4B2E2B]"
           >
-            ← Back to Home
-          </Link>
+            ← Back to Dashboard
+          </button>
 
-          <h1 className="mt-5 text-3xl font-bold text-[#4B2E2B]">
+          <h1
+            className="mt-5 text-3xl font-bold text-[#4B2E2B]"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
             Create New Task
           </h1>
 
-          <p className="mt-2 text-[#8C5A3C]">
+          <p className="mt-2 text-[#6F4536]">
             Add a task and assign it to an employee.
           </p>
         </div>
@@ -113,7 +151,10 @@ function CreateTask() {
         {/* Task Form */}
         <Card className="border-[#C08552]/30 bg-white shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-[#4B2E2B]">
+            <CardTitle
+              className="text-2xl text-[#4B2E2B]"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               Task Details
             </CardTitle>
 
@@ -127,7 +168,6 @@ function CreateTask() {
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-6"
             >
-
               {/* Task Title */}
               <div className="space-y-2">
                 <Label htmlFor="title">Task Title</Label>
@@ -190,7 +230,7 @@ function CreateTask() {
 
               {/* Priority and Status */}
               <div className="grid gap-6 sm:grid-cols-2">
-
+                {/* Priority */}
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
 
@@ -212,6 +252,7 @@ function CreateTask() {
                   )}
                 </div>
 
+                {/* Status */}
                 <div className="space-y-2">
                   <Label htmlFor="status">Task Status</Label>
 
@@ -220,7 +261,6 @@ function CreateTask() {
                     {...register("status")}
                     className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-[#C08552]"
                   >
-                    <option value="">Select status</option>
                     <option value="Pending">Pending</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Completed">Completed</option>
@@ -241,8 +281,13 @@ function CreateTask() {
                 <Input
                   id="dueDate"
                   type="date"
+                  min={today}
                   {...register("dueDate")}
                 />
+
+                <p className="text-xs text-[#6F4536]">
+                  Select today or a future date.
+                </p>
 
                 {errors.dueDate && (
                   <p className="text-sm text-red-600">
@@ -266,7 +311,6 @@ function CreateTask() {
               >
                 {isSubmitting ? "Creating Task..." : "Create Task"}
               </Button>
-
             </form>
           </CardContent>
         </Card>
