@@ -1,6 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import  Navbar  from "@/components/ui/navbar";
 
 function Landing() {
   return (
@@ -9,6 +10,7 @@ function Landing() {
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
       {/* Navbar */}
+      
       <nav className="border-b border-[#C08552]/25">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-10">
           <Link to="/" className="flex items-center gap-3">
